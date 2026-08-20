@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - NRS Tax Tracking System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">
+        <span>🇳🇬</span>
+        <span>NRS Tax Tracking System</span>
+      </a>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="bill-sections.html" class="nav-link">Bill Sections</a>
+        <a href="calculator.html" class="nav-link">Tax Calculator</a>
+        <a href="feedback.html" class="nav-link">Feedback</a>
+        <a href="admin.html" class="nav-link active">Admin</a>
+      </div>
+      <div class="nav-auth" id="navAuth">
+        <a href="login.html" class="btn btn-outline">Login</a>
+        <a href="register.html" class="btn btn-primary">Register</a>
+      </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Admin Dashboard</h1>
+    <p>Manage bill sections, view feedback, and monitor application data.</p>
+  </section>
+
+  <!-- Admin Content -->
+  <div class="container" id="adminContent">
+    <div id="accessDenied" style="display: none;">
+      <div class="alert alert-danger">
+        <strong>Access Denied.</strong> You need admin privileges to view this page.
+      </div>
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="index.html" class="btn btn-primary">Go to Home</a>
+      </div>
+
+    <div id="adminPanel" style="display: none;">
+      <!-- Statistics -->
+      <div class="admin-stats">
+        <div class="stat-card">
+          <div class="stat-icon green">📜</div>
+          <div class="stat-info">
+            <h3 id="statBills">0</h3>
+            <p>Bill Sections</p>
+          </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">💬</div>
+          <div class="stat-info">
+            <h3 id="statFeedback">0</h3>
+            <p>Feedback Items</p>
+          </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">👥</div>
+          <div class="stat-info">
+            <h3 id="statUsers">0</h3>
+            <p>Registered Users</p>
+          </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🧮</div>
+          <div class="stat-info">
+            <h3 id="statCalculations">0</h3>
+            <p>Tax Calculations</p>
+          </div>
+      </div>
+
+      <!-- Bill Sections Management -->
+      <div class="admin-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <h3>Bill Sections</h3>
+          <button class="btn btn-primary" onclick="openBillModal()">+ Add New Section</button>
+        </div>
+        <div id="billsTableContainer">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading bill sections...</p>
+          </div>
+      </div>
+
+      <!-- Feedback Management -->
+      <div class="admin-section">
+        <h3 style="margin-bottom: 1.5rem;">Feedback</h3>
+        <div id="feedbackTableContainer">
+          <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading feedback...</p>
+          </div>
+      </div>
+  </div>
+
+  <!-- Add/Edit Bill Modal -->
+  <div id="billModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+      <h3 id="modalTitle" style="margin-bottom: 1.5rem;">Add Bill Section</h3>
+      <div id="modalAlert"></div>
+      <form id="billForm">
+        <input type="hidden" id="billId">
+        <div class="form-group">
+          <label>Section Number</label>
+          <input type="text" id="billSectionNumber" required placeholder="e.g., Section 12">
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="billTitle" required placeholder="Enter section title">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="billCategory" required placeholder="e.g., Personal Income Tax">
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea id="billContent" required placeholder="Enter section content" rows="6"></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn-calculate" style="flex: 1;">Save</button>
+          <button type="button" class="btn btn-outline" style="flex: 1; border-color: var(--text-light); color: var(--text-dark);" onclick="closeBillModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p><strong>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</strong></p>
+    <p>Computer Science Final Year Project</p>
+    <p>© 2026 - Built for Educational Purposes</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
+</body>

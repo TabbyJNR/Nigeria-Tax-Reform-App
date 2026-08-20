@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tax Tracking System for NIGERIA REVENUE SERVICE (NRS)</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="nav-brand">
+          <span>🇳🇬</span>
+          <span>NRS Tax Tracking System</span>
+        </a>
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+          ☰
+        </button>
+        <div class="nav-links" id="navLinks">
+          <a href="index.html" class="nav-link active">Home</a>
+          <a href="bill-sections.html" class="nav-link">Bill Sections</a>
+          <a href="calculator.html" class="nav-link">Tax Calculator</a>
+          <a href="feedback.html" class="nav-link">Feedback</a>
+          <a
+            href="admin.html"
+            class="nav-link"
+            id="adminLink"
+            style="display: none"
+            >Admin</a
+          >
+        </div>
+        <div class="nav-auth" id="navAuth">
+          <a href="login.html" class="btn btn-outline">Login</a>
+          <a href="register.html" class="btn btn-primary">Register</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</h1>
+      <p>
+        Understanding the new tax reforms for a stronger, more prosperous
+        Nigeria. Explore the bill, calculate your taxes, and share your
+        feedback.
+      </p>
+      <div class="hero-buttons">
+        <a href="bill-sections.html" class="btn btn-primary"
+          >Explore the Bill</a
+        >
+        <a href="calculator.html" class="btn btn-outline">Calculate Your Tax</a>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <div class="container">
+      <div class="features">
+        <div class="section-title">
+          <h2>Key Features</h2>
+          <p>Everything you need to understand the Nigeria Revenue Service (NRS) tax system</p>
+        </div>
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-icon">📜</div>
+            <h3>Bill Sections</h3>
+            <p>
+              Browse through all sections of the NRS tax information including
+              Personal Income Tax, Company Income Tax, VAT, and more. Search and
+              filter by category.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🧮</div>
+            <h3>Tax Calculator</h3>
+            <p>
+              Calculate your tax liability under the new reform. Supports
+              Personal Income Tax (PIT), Company Income Tax (CIT), and Value
+              Added Tax (VAT).
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-icon">💬</div>
+            <h3>Public Feedback</h3>
+            <p>
+              Share your opinions and suggestions on the tax system. Your
+              voice matters in shaping Nigeria's fiscal policy.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📊</div>
+            <h3>Admin Dashboard</h3>
+            <p>
+              Administrators can manage bill sections, view public feedback, and
+              monitor application usage through a comprehensive dashboard.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🔒</div>
+            <h3>Secure Access</h3>
+            <p>
+              User authentication with JWT tokens ensures your data is
+              protected. Register and login to access personalized features.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📱</div>
+            <h3>Mobile Friendly</h3>
+            <p>
+              Access the application on any device. Fully responsive design
+              ensures a seamless experience on desktop, tablet, and mobile.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overview Section -->
+      <div class="section-title">
+        <h2>About the Reform</h2>
+        <p>Key highlights of the Nigeria Revenue Service (NRS) tax information</p>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <h3>Reduced Tax Rates</h3>
+          <p>
+            Company Income Tax reduced from 30% to 25% for large companies.
+            Small companies with turnover below ₦25 million are now tax-exempt.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏠</div>
+          <h3>Property Tax Relief</h3>
+          <p>
+            Exemption threshold for primary residence increased to ₦50 million.
+            First-time homebuyers get relief on properties below ₦15 million.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-icon">💻</div>
+          <h3>Digital Economy</h3>
+          <p>
+            New provisions for taxing digital services. Non-resident digital
+            service providers must register for VAT in Nigeria.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p><strong>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</strong></p>
+      <p>
+        Student Matriculation Number:COS/22U/3143 NAUB Computer Science Final Year Project
+      </p>
+      <p>© 2026 - Built for Educational Purposes</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>
