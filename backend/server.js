@@ -6,10 +6,13 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Resolve frontend path — works both locally and on Render
+const frontendPath = path.join(__dirname, "../frontend");
+
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(express.static(frontendPath));
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
@@ -17,9 +20,9 @@ app.use("/api/bills", require("./routes/bills"));
 app.use("/api/calculator", require("./routes/calculator"));
 app.use("/api/feedback", require("./routes/feedback"));
 
-// Serve frontend
+// Serve frontend for all non-API routes
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // Error handler
@@ -32,6 +35,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📁 Database: SQLite (database.sqlite)`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`📂 Serving frontend from: ${frontendPath}`);
 });
 
 module.exports = app;
