@@ -32,6 +32,20 @@ router.get("/", (req, res) => {
   });
 });
 
+// Get all categories — MUST be above /:id to avoid route conflict
+router.get("/categories/all", (req, res) => {
+  db.all(
+    "SELECT DISTINCT category FROM bill_sections ORDER BY category",
+    [],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to fetch categories." });
+      }
+      res.json(rows.map((row) => row.category));
+    },
+  );
+});
+
 // Get bill section by ID
 router.get("/:id", (req, res) => {
   db.get(
@@ -47,20 +61,6 @@ router.get("/:id", (req, res) => {
         return res.status(404).json({ message: "Bill section not found." });
       }
       res.json(row);
-    },
-  );
-});
-
-// Get all categories
-router.get("/categories/all", (req, res) => {
-  db.all(
-    "SELECT DISTINCT category FROM bill_sections ORDER BY category",
-    [],
-    (err, rows) => {
-      if (err) {
-        return res.status(500).json({ message: "Failed to fetch categories." });
-      }
-      res.json(rows.map((row) => row.category));
     },
   );
 });
