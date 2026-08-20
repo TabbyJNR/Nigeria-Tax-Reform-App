@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Payment - NRS Tax Tracking System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .track-container { max-width: 700px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .search-box { display: flex; gap: 1rem; margin-bottom: 2rem; }
+    .search-box input { flex: 1; padding: 0.9rem 1.2rem; border: 1.5px solid #ddd; border-radius: 8px; font-size: 1rem; }
+    .search-box input:focus { outline: none; border-color: #1a6b3c; }
+    .search-box button { background: #1a6b3c; color: white; border: none; padding: 0.9rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .result-card { background: #f9f9f9; border: 1.5px solid #ddd; border-radius: 10px; padding: 1.5rem; }
+    .result-card h3 { margin-top: 0; color: #1a6b3c; }
+    .status-badge { display: inline-block; padding: 0.3rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem; }
+    .status-Successful { background: #d4edda; color: #155724; }
+    .status-Pending { background: #fff3cd; color: #856404; }
+    .status-Failed { background: #f8d7da; color: #721c24; }
+    .status-Cancelled { background: #e2e3e5; color: #383d41; }
+    .detail-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .detail-table td { padding: 0.7rem 1rem; border-bottom: 1px solid #eee; }
+    .detail-table td:first-child { font-weight: 600; color: #555; width: 45%; }
+    .history-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    .history-table th { background: #1a6b3c; color: white; padding: 0.7rem 1rem; text-align: left; }
+    .history-table td { padding: 0.7rem 1rem; border-bottom: 1px solid #eee; }
+    .history-table tr:hover { background: #f0f8f0; }
+    .alert { padding: 0.9rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .tab-btn { padding: 0.6rem 1.2rem; border: 1.5px solid #1a6b3c; border-radius: 8px; background: white; color: #1a6b3c; font-weight: 600; cursor: pointer; }
+    .tab-btn.active { background: #1a6b3c; color: white; }
+    @media(max-width:500px){ .search-box { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand"><span>🇳🇬</span><span>NRS Tax Tracking System</span></a>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="bill-sections.html" class="nav-link">Bill Sections</a>
+        <a href="calculator.html" class="nav-link">Tax Calculator</a>
+        <a href="payment.html" class="nav-link">Pay Tax</a>
+        <a href="track-payment.html" class="nav-link active">Track Payment</a>
+        <a href="feedback.html" class="nav-link">Feedback</a>
+        <a href="admin.html" class="nav-link" id="adminLink" style="display:none;">Admin</a>
+      </div>
+      <div class="nav-auth" id="navAuth"></div>
+    </div>
+  </nav>
+
+  <section class="hero" style="padding: 3rem 1rem;">
+    <h1>🔍 Track Payment</h1>
+    <p>Search for any payment using your receipt number or transaction reference.</p>
+  </section>
+
+  <div class="container">
+    <div class="track-container">
+      <div id="alertContainer"></div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('search')">Search by Receipt</button>
+        <button class="tab-btn" onclick="switchTab('history')" id="historyTabBtn">My Payment History</button>
+      </div>
+
+      <!-- Search Tab -->
+      <div id="searchTab">
+        <h2 style="color:#1a6b3c; margin-bottom:0.5rem;">Track by Receipt / Transaction Ref</h2>
+        <p style="color:#666; margin-bottom:1.5rem;">Enter your receipt number (e.g. NRS-RCP-202608-12345) or transaction reference.</p>
+        <div class="search-box">
+          <input type="text" id="searchQuery" placeholder="Enter receipt number or transaction reference..." onkeydown="if(event.key==='Enter') trackPayment()">
+          <button onclick="trackPayment()">🔍 Track</button>
+        </div>
+        <div id="searchResult"></div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="historyTab" style="display:none;">
+        <h2 style="color:#1a6b3c; margin-bottom:1rem;">My Payment History</h2>
+        <div id="historyContent">
+          <p style="color:#666;">Loading your payment history...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</strong></p>
+    <p>© 2026 - Built for Educational Purposes</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Pre-fill from URL if passed
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        document.getElementById('searchQuery').value = ref;
+        trackPayment();
+      }
+    });
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('searchTab').style.display = tab === 'search' ? 'block' : 'none';
+      document.getElementById('historyTab').style.display = tab === 'history' ? 'block' : 'none';
+      event.target.classList.add('active');
+      if (tab === 'history') loadHistory();
+    }
+
+    async function trackPayment() {
+      const query = document.getElementById('searchQuery').value.trim();
+      if (!query) {
+        document.getElementById('searchResult').innerHTML = '<div class="alert alert-danger">Please enter a receipt number or transaction reference.</div>';
+        return;
+      }
+
+      document.getElementById('searchResult').innerHTML = '<p style="color:#666;">Searching...</p>';
+
+      try {
+        const res = await fetch(`/api/payments/track/${encodeURIComponent(query)}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById('searchResult').innerHTML = `
+            <div class="result-card">
+              <h3>Payment Details</h3>
+              <span class="status-badge status-${data.payment_status}">${data.payment_status === 'Successful' ? '✅' : data.payment_status === 'Pending' ? '⏳' : '❌'} ${data.payment_status}</span>
+              <table class="detail-table">
+                <tr><td>Receipt Number</td><td><strong>${data.receipt_number}</strong></td></tr>
+                <tr><td>Transaction Ref</td><td>${data.transaction_reference}</td></tr>
+                <tr><td>Taxpayer Name</td><td>${data.taxpayer_name}</td></tr>
+                <tr><td>TIN</td><td>${data.tin}</td></tr>
+                <tr><td>Tax Category</td><td>${data.tax_name}</td></tr>
+                <tr><td>Amount</td><td><strong>₦${parseFloat(data.amount).toLocaleString('en-NG', {minimumFractionDigits:2})}</strong></td></tr>
+                <tr><td>Payment Method</td><td>${data.payment_method}</td></tr>
+                <tr><td>Date</td><td>${new Date(data.payment_date).toLocaleString()}</td></tr>
+              </table>
+            </div>
+          `;
+        } else {
+          document.getElementById('searchResult').innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        }
+      } catch (e) {
+        document.getElementById('searchResult').innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
+      }
+    }
+
+    async function loadHistory() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        document.getElementById('historyContent').innerHTML = '<p>Please <a href="login.html">login</a> to view your payment history.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/payments/my-payments', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!data.length) {
+          document.getElementById('historyContent').innerHTML = '<p style="color:#666;">No payments found. <a href="payment.html">Make your first payment →</a></p>';
+          return;
+        }
+
+        document.getElementById('historyContent').innerHTML = `
+          <table class="history-table">
+            <thead>
+              <tr><th>Receipt No.</th><th>Tax Category</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody>
+              ${data.map(p => `
+                <tr>
+                  <td><a href="?ref=${p.receipt_number}" style="color:#1a6b3c; font-weight:600;">${p.receipt_number}</a></td>
+                  <td>${p.tax_name}</td>
+                  <td>₦${parseFloat(p.amount).toLocaleString('en-NG', {minimumFractionDigits:2})}</td>
+                  <td><span class="status-badge status-${p.payment_status}">${p.payment_status}</span></td>
+                  <td>${new Date(p.payment_date).toLocaleDateString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (e) {
+        document.getElementById('historyContent').innerHTML = '<div class="alert alert-danger">Failed to load history.</div>';
+      }
+    }
+  </script>
+</body>
+</html>

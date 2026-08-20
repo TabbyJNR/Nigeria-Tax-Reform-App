@@ -155,3 +155,21 @@ router.post("/setup-admin", (req, res) => {
 });
 
 module.exports = router;
+
+// Get all users (admin only)
+router.get("/users", (req, res) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Unauthorized." });
+
+  const jwt = require("jsonwebtoken");
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err || user.role !== "admin") return res.status(403).json({ message: "Forbidden." });
+    db.all("SELECT id, fullname, email, role, is_active, created_at FROM users ORDER BY created_at DESC", [], (err, rows) => {
+      if (err) return res.status(500).json({ message: "Database error." });
+      res.json(rows);
+    });
+  });
+});
+
+module.exports = router;

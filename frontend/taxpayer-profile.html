@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxpayer Profile - NRS Tax Tracking System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .profile-container { max-width: 750px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .profile-container h2 { color: var(--primary-green, #1a6b3c); margin-bottom: 0.5rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-weight: 600; font-size: 0.9rem; color: #333; }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.7rem 1rem; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-green, #1a6b3c); }
+    .tin-display { background: #e8f5e9; border: 2px dashed #1a6b3c; border-radius: 10px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; display: none; }
+    .tin-display h3 { color: #1a6b3c; font-size: 1.8rem; letter-spacing: 2px; margin: 0.5rem 0; }
+    .btn-submit { background: var(--primary-green, #1a6b3c); color: white; border: none; padding: 0.9rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 1rem; transition: background 0.2s; }
+    .btn-submit:hover { background: #145c32; }
+    .alert { padding: 0.9rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-weight: 500; }
+    .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    .existing-profile { background: #f0f8ff; border: 1.5px solid #1a6b3c; border-radius: 10px; padding: 1.5rem; }
+    .existing-profile table { width: 100%; border-collapse: collapse; }
+    .existing-profile td { padding: 0.5rem 1rem; border-bottom: 1px solid #e0e0e0; }
+    .existing-profile td:first-child { font-weight: 600; color: #555; width: 40%; }
+    @media(max-width:600px){ .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand"><span>🇳🇬</span><span>NRS Tax Tracking System</span></a>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="bill-sections.html" class="nav-link">Bill Sections</a>
+        <a href="calculator.html" class="nav-link">Tax Calculator</a>
+        <a href="payment.html" class="nav-link">Pay Tax</a>
+        <a href="track-payment.html" class="nav-link">Track Payment</a>
+        <a href="feedback.html" class="nav-link">Feedback</a>
+        <a href="admin.html" class="nav-link" id="adminLink" style="display:none;">Admin</a>
+      </div>
+      <div class="nav-auth" id="navAuth"></div>
+    </div>
+  </nav>
+
+  <section class="hero" style="padding: 3rem 1rem;">
+    <h1>Taxpayer Profile</h1>
+    <p>Register your taxpayer profile to access payment services.</p>
+  </section>
+
+  <div class="container">
+    <div class="profile-container">
+      <div id="alertContainer"></div>
+      <div id="tinDisplay" class="tin-display">
+        <p style="color:#555; margin:0;">Your Taxpayer Identification Number (TIN)</p>
+        <h3 id="tinNumber"></h3>
+        <p style="color:#777; font-size:0.85rem; margin:0;">Keep this safe — you'll need it for all tax transactions.</p>
+      </div>
+
+      <div id="existingProfile" style="display:none;">
+        <h2>✅ Your Taxpayer Profile</h2>
+        <p style="color:#555; margin-bottom:1rem;">Your taxpayer profile is already registered.</p>
+        <div class="existing-profile">
+          <table id="profileTable"></table>
+        </div>
+        <div style="margin-top:1.5rem; display:flex; gap:1rem;">
+          <a href="payment.html" class="btn-submit" style="text-align:center; text-decoration:none;">💳 Make a Payment</a>
+          <a href="track-payment.html" class="btn-submit" style="text-align:center; text-decoration:none; background:#555;">🔍 Track Payment</a>
+        </div>
+      </div>
+
+      <div id="registerForm">
+        <h2>📋 Register Taxpayer Profile</h2>
+        <p style="color:#666; margin-bottom:1.5rem;">Complete your profile to get your TIN and access tax payment services.</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="fullname" placeholder="As on your ID card">
+          </div>
+          <div class="form-group">
+            <label>Business Name (optional)</label>
+            <input type="text" id="business_name" placeholder="If applicable">
+          </div>
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" id="email" placeholder="Your email">
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" id="phone" placeholder="e.g. 08012345678">
+          </div>
+          <div class="form-group">
+            <label>State *</label>
+            <select id="state">
+              <option value="">Select State</option>
+              <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option>
+              <option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option>
+              <option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option>
+              <option>Ekiti</option><option>Enugu</option><option>FCT - Abuja</option><option>Gombe</option>
+              <option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option>
+              <option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option>
+              <option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option>
+              <option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option>
+              <option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>LGA *</label>
+            <input type="text" id="lga" placeholder="Local Government Area">
+          </div>
+          <div class="form-group">
+            <label>Occupation *</label>
+            <input type="text" id="occupation" placeholder="e.g. Software Engineer">
+          </div>
+          <div class="form-group">
+            <label>Tax Category *</label>
+            <select id="tax_category">
+              <option value="">Select Category</option>
+              <option>Individual</option>
+              <option>Self-Employed</option>
+              <option>Small Business</option>
+              <option>Medium Enterprise</option>
+              <option>Large Corporation</option>
+              <option>Non-Profit Organization</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Address *</label>
+            <input type="text" id="address" placeholder="Full residential or business address">
+          </div>
+        </div>
+        <button class="btn-submit" onclick="registerTaxpayer()">Register & Get TIN</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</strong></p>
+    <p>© 2026 - Built for Educational Purposes</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+      loadExistingProfile();
+    });
+
+    async function loadExistingProfile() {
+      const token = localStorage.getItem('token');
+      try {
+        const res = await fetch('/api/taxpayers/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          showExistingProfile(data);
+        }
+      } catch (e) {}
+    }
+
+    function showExistingProfile(data) {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('existingProfile').style.display = 'block';
+      const table = document.getElementById('profileTable');
+      const fields = [
+        ['TIN', data.tin], ['Full Name', data.fullname], ['Business Name', data.business_name || 'N/A'],
+        ['Email', data.email], ['Phone', data.phone], ['State', data.state],
+        ['LGA', data.lga], ['Occupation', data.occupation], ['Tax Category', data.tax_category],
+        ['Address', data.address], ['Registered', new Date(data.created_at).toLocaleDateString()]
+      ];
+      table.innerHTML = fields.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+    }
+
+    async function registerTaxpayer() {
+      const token = localStorage.getItem('token');
+      const body = {
+        fullname: document.getElementById('fullname').value,
+        business_name: document.getElementById('business_name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        state: document.getElementById('state').value,
+        lga: document.getElementById('lga').value,
+        occupation: document.getElementById('occupation').value,
+        tax_category: document.getElementById('tax_category').value,
+      };
+
+      if (!body.fullname || !body.email || !body.phone || !body.address || !body.state || !body.lga || !body.occupation || !body.tax_category) {
+        showAlert('Please fill in all required fields.', 'danger');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/taxpayers/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('tinNumber').textContent = data.tin;
+          document.getElementById('tinDisplay').style.display = 'block';
+          showAlert('Profile registered successfully! Your TIN has been generated.', 'success');
+          setTimeout(() => loadExistingProfile(), 2000);
+        } else {
+          showAlert(data.message, 'danger');
+        }
+      } catch (e) {
+        showAlert('Network error. Please try again.', 'danger');
+      }
+    }
+
+    function showAlert(msg, type) {
+      document.getElementById('alertContainer').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+  </script>
+</body>
+</html>

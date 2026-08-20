@@ -6,14 +6,11 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Resolve frontend path — works both locally and on Render
 const frontendPath = path.join(__dirname, "../frontend");
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Serve static files FIRST (CSS, JS, images)
 app.use(express.static(frontendPath, { extensions: ["html"] }));
 
 // API Routes
@@ -21,13 +18,14 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/bills", require("./routes/bills"));
 app.use("/api/calculator", require("./routes/calculator"));
 app.use("/api/feedback", require("./routes/feedback"));
+app.use("/api/taxpayers", require("./routes/taxpayers"));
+app.use("/api/payments", require("./routes/payments"));
+app.use("/api/tax-categories", require("./routes/tax-categories"));
 
-// Catch-all: serve index.html for any unmatched route (but NOT for static assets)
+// Catch-all: serve frontend
 app.get("*", (req, res, next) => {
   const ext = path.extname(req.path);
-  if (ext && ext !== ".html") {
-    return next(); // let express handle 404 for missing assets
-  }
+  if (ext && ext !== ".html") return next();
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 

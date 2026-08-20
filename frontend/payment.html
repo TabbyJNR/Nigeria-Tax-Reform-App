@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Tax - NRS Tax Tracking System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .payment-container { max-width: 700px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .payment-container h2 { color: #1a6b3c; margin-bottom: 0.5rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.2rem; }
+    .form-group label { font-weight: 600; font-size: 0.9rem; color: #333; }
+    .form-group input, .form-group select { padding: 0.8rem 1rem; border: 1.5px solid #ddd; border-radius: 8px; font-size: 0.95rem; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #1a6b3c; }
+    .taxpayer-info { background: #e8f5e9; border-radius: 10px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #1a6b3c; }
+    .taxpayer-info p { margin: 0.3rem 0; font-size: 0.95rem; color: #333; }
+    .taxpayer-info strong { color: #1a6b3c; }
+    .amount-display { background: #f0f8ff; border-radius: 10px; padding: 1.2rem; margin: 1rem 0; border: 1.5px solid #1a6b3c; }
+    .amount-display h3 { margin: 0; color: #1a6b3c; font-size: 1.5rem; }
+    .btn-pay { background: #1a6b3c; color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 1rem; transition: background 0.2s; }
+    .btn-pay:hover { background: #145c32; }
+    .btn-pay:disabled { background: #aaa; cursor: not-allowed; }
+    .receipt-card { background: white; border: 2px solid #1a6b3c; border-radius: 12px; padding: 2rem; text-align: center; display: none; }
+    .receipt-card h2 { color: #1a6b3c; margin-bottom: 1rem; }
+    .receipt-number { font-size: 1.6rem; font-weight: 800; color: #1a6b3c; letter-spacing: 2px; background: #e8f5e9; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    .receipt-table { width: 100%; border-collapse: collapse; text-align: left; margin: 1rem 0; }
+    .receipt-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #eee; }
+    .receipt-table td:first-child { font-weight: 600; color: #555; width: 45%; }
+    .alert { padding: 0.9rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+    .no-profile-msg { text-align: center; padding: 2rem; }
+    .no-profile-msg a { background: #1a6b3c; color: white; padding: 0.8rem 1.5rem; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand"><span>🇳🇬</span><span>NRS Tax Tracking System</span></a>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="bill-sections.html" class="nav-link">Bill Sections</a>
+        <a href="calculator.html" class="nav-link">Tax Calculator</a>
+        <a href="payment.html" class="nav-link active">Pay Tax</a>
+        <a href="track-payment.html" class="nav-link">Track Payment</a>
+        <a href="feedback.html" class="nav-link">Feedback</a>
+        <a href="admin.html" class="nav-link" id="adminLink" style="display:none;">Admin</a>
+      </div>
+      <div class="nav-auth" id="navAuth"></div>
+    </div>
+  </nav>
+
+  <section class="hero" style="padding: 3rem 1rem;">
+    <h1>💳 Make Tax Payment</h1>
+    <p>Securely pay your taxes through the NRS online payment portal.</p>
+  </section>
+
+  <div class="container">
+    <div class="payment-container">
+      <div id="alertContainer"></div>
+
+      <!-- No profile warning -->
+      <div id="noProfileMsg" class="no-profile-msg" style="display:none;">
+        <h3>⚠️ Taxpayer Profile Required</h3>
+        <p>You need to complete your taxpayer profile before making a payment.</p>
+        <a href="taxpayer-profile.html">Complete Profile & Get TIN</a>
+      </div>
+
+      <!-- Payment form -->
+      <div id="paymentForm" style="display:none;">
+        <h2>Tax Payment Form</h2>
+        <p style="color:#666; margin-bottom:1.5rem;">All payments are processed securely and receipts are generated instantly.</p>
+
+        <div class="taxpayer-info" id="taxpayerInfo"></div>
+
+        <div class="form-group">
+          <label>Tax Category *</label>
+          <select id="taxCategory" onchange="calculateAmount()">
+            <option value="">-- Select Tax Category --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Taxable Amount (₦) *</label>
+          <input type="number" id="taxableAmount" placeholder="Enter your taxable income or amount" oninput="calculateAmount()">
+        </div>
+
+        <div class="amount-display" id="amountDisplay" style="display:none;">
+          <p style="margin:0; color:#555;">Tax Amount Due:</p>
+          <h3 id="taxAmountDue">₦0.00</h3>
+          <p style="margin:0; color:#777; font-size:0.85rem;" id="taxRateInfo"></p>
+        </div>
+
+        <div class="form-group">
+          <label>Payment Method *</label>
+          <select id="paymentMethod">
+            <option value="Online">Online Transfer</option>
+            <option value="Card">Debit/Credit Card</option>
+            <option value="Bank">Bank Deposit</option>
+            <option value="USSD">USSD</option>
+          </select>
+        </div>
+
+        <button class="btn-pay" id="payBtn" onclick="processPayment()" disabled>
+          💳 Process Payment
+        </button>
+      </div>
+
+      <!-- Receipt -->
+      <div class="receipt-card" id="receiptCard">
+        <h2>✅ Payment Successful!</h2>
+        <p style="color:#555;">Your tax payment has been processed successfully.</p>
+        <div class="receipt-number" id="receiptNumber"></div>
+        <table class="receipt-table" id="receiptTable"></table>
+        <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <button onclick="printReceipt()" style="background:#1a6b3c; color:white; border:none; padding:0.7rem 1.5rem; border-radius:8px; cursor:pointer; font-weight:600;">🖨️ Print Receipt</button>
+          <a href="track-payment.html" style="background:#555; color:white; padding:0.7rem 1.5rem; border-radius:8px; text-decoration:none; font-weight:600;">🔍 Track Payment</a>
+          <button onclick="resetForm()" style="background:#eee; color:#333; border:none; padding:0.7rem 1.5rem; border-radius:8px; cursor:pointer; font-weight:600;">Make Another Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</strong></p>
+    <p>© 2026 - Built for Educational Purposes</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    let taxpayerData = null;
+    let categoriesData = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) { window.location.href = 'login.html'; return; }
+      await loadTaxpayerProfile();
+      await loadTaxCategories();
+    });
+
+    async function loadTaxpayerProfile() {
+      const token = localStorage.getItem('token');
+      try {
+        const res = await fetch('/api/taxpayers/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          taxpayerData = await res.json();
+          document.getElementById('paymentForm').style.display = 'block';
+          document.getElementById('taxpayerInfo').innerHTML = `
+            <p>👤 <strong>Name:</strong> ${taxpayerData.fullname}</p>
+            <p>🔢 <strong>TIN:</strong> ${taxpayerData.tin}</p>
+            <p>📍 <strong>State:</strong> ${taxpayerData.state} | <strong>Category:</strong> ${taxpayerData.tax_category}</p>
+          `;
+        } else {
+          document.getElementById('noProfileMsg').style.display = 'block';
+        }
+      } catch (e) {
+        document.getElementById('noProfileMsg').style.display = 'block';
+      }
+    }
+
+    async function loadTaxCategories() {
+      try {
+        const res = await fetch('/api/tax-categories');
+        categoriesData = await res.json();
+        const select = document.getElementById('taxCategory');
+        categoriesData.forEach(c => {
+          select.innerHTML += `<option value="${c.id}" data-rate="${c.rate}">${c.tax_name} (${c.rate}%)</option>`;
+        });
+      } catch (e) {}
+    }
+
+    function calculateAmount() {
+      const categorySelect = document.getElementById('taxCategory');
+      const amount = parseFloat(document.getElementById('taxableAmount').value);
+      const selected = categorySelect.options[categorySelect.selectedIndex];
+      const rate = parseFloat(selected?.dataset?.rate || 0);
+
+      if (categorySelect.value && amount > 0) {
+        const tax = (amount * rate) / 100;
+        document.getElementById('amountDisplay').style.display = 'block';
+        document.getElementById('taxAmountDue').textContent = `₦${tax.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+        document.getElementById('taxRateInfo').textContent = `Rate: ${rate}% on ₦${amount.toLocaleString('en-NG')}`;
+        document.getElementById('payBtn').disabled = false;
+        document.getElementById('payBtn').dataset.amount = tax;
+        document.getElementById('payBtn').dataset.categoryId = categorySelect.value;
+      } else {
+        document.getElementById('amountDisplay').style.display = 'none';
+        document.getElementById('payBtn').disabled = true;
+      }
+    }
+
+    async function processPayment() {
+      const token = localStorage.getItem('token');
+      const btn = document.getElementById('payBtn');
+      const amount = btn.dataset.amount;
+      const tax_category_id = btn.dataset.categoryId;
+      const payment_method = document.getElementById('paymentMethod').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        const res = await fetch('/api/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ tax_category_id, amount, payment_method })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById('paymentForm').style.display = 'none';
+          document.getElementById('receiptCard').style.display = 'block';
+          document.getElementById('receiptNumber').textContent = data.receipt_number;
+
+          const categorySelect = document.getElementById('taxCategory');
+          const categoryName = categorySelect.options[categorySelect.selectedIndex].text;
+
+          document.getElementById('receiptTable').innerHTML = `
+            <tr><td>Receipt Number</td><td><strong>${data.receipt_number}</strong></td></tr>
+            <tr><td>Transaction Ref</td><td>${data.transaction_reference}</td></tr>
+            <tr><td>Taxpayer Name</td><td>${data.taxpayer_name}</td></tr>
+            <tr><td>TIN</td><td>${data.tin}</td></tr>
+            <tr><td>Tax Category</td><td>${categoryName}</td></tr>
+            <tr><td>Amount Paid</td><td><strong>₦${parseFloat(data.amount).toLocaleString('en-NG', {minimumFractionDigits:2})}</strong></td></tr>
+            <tr><td>Payment Method</td><td>${payment_method}</td></tr>
+            <tr><td>Status</td><td><span style="color:#1a6b3c; font-weight:700;">✅ Successful</span></td></tr>
+            <tr><td>Date</td><td>${new Date().toLocaleString()}</td></tr>
+          `;
+        } else {
+          showAlert(data.message, 'danger');
+          if (data.redirect) setTimeout(() => window.location.href = data.redirect, 2000);
+          btn.disabled = false;
+          btn.textContent = '💳 Process Payment';
+        }
+      } catch (e) {
+        showAlert('Network error. Please try again.', 'danger');
+        btn.disabled = false;
+        btn.textContent = '💳 Process Payment';
+      }
+    }
+
+    function printReceipt() { window.print(); }
+
+    function resetForm() {
+      document.getElementById('receiptCard').style.display = 'none';
+      document.getElementById('paymentForm').style.display = 'block';
+      document.getElementById('taxCategory').value = '';
+      document.getElementById('taxableAmount').value = '';
+      document.getElementById('amountDisplay').style.display = 'none';
+      document.getElementById('payBtn').disabled = true;
+    }
+
+    function showAlert(msg, type) {
+      document.getElementById('alertContainer').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    }
+  </script>
+</body>
+</html>
