@@ -121,4 +121,37 @@ router.get("/me", (req, res) => {
   });
 });
 
+// One-time admin setup route — creates admin if none exists
+router.post("/setup-admin", (req, res) => {
+  const { secretKey } = req.body;
+
+  // Protect this route with a secret
+  if (secretKey !== "NRS_ADMIN_SETUP_2026") {
+    return res.status(403).json({ message: "Invalid secret key." });
+  }
+
+  db.get("SELECT id FROM users WHERE role = 'admin'", [], (err, row) => {
+    if (err) return res.status(500).json({ message: "Database error." });
+
+    if (row) {
+      return res.json({ message: "Admin already exists." });
+    }
+
+    const hashedPassword = bcrypt.hashSync("admin123", 10);
+    db.run(
+      "INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)",
+      ["Administrator", "admin@nrs.gov.ng", hashedPassword, "admin"],
+      function (err) {
+        if (err)
+          return res.status(500).json({ message: "Failed to create admin." });
+        res.json({
+          message: "Admin created successfully!",
+          email: "admin@nrs.gov.ng",
+          password: "admin123",
+        });
+      },
+    );
+  });
+});
+
 module.exports = router;
