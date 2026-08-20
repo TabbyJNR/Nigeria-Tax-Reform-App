@@ -2,6 +2,9 @@
 const API_URL = `${location.origin}/api`;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Update navbar on every page load
+  updateNavbar();
+
   // Login form
   const loginForm = document.getElementById('loginForm');
   if (loginForm) {
@@ -14,6 +17,39 @@ document.addEventListener('DOMContentLoaded', () => {
     registerForm.addEventListener('submit', handleRegister);
   }
 });
+
+// Update navbar based on login state
+function updateNavbar() {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const navAuth = document.getElementById('navAuth');
+  const adminLink = document.getElementById('adminLink');
+
+  if (token && user) {
+    // User is logged in — replace Login/Register with name + logout
+    if (navAuth) {
+      navAuth.innerHTML = `
+        <span style="color: white; margin-right: 1rem; font-weight: 500;">👤 ${user.fullname}</span>
+        <button onclick="handleLogout()" class="btn btn-outline" style="cursor:pointer;">Logout</button>
+      `;
+    }
+    // Show Admin link if user is admin
+    if (adminLink && user.role === 'admin') {
+      adminLink.style.display = 'inline-block';
+    }
+  } else {
+    // Not logged in — show Login/Register
+    if (navAuth) {
+      navAuth.innerHTML = `
+        <a href="login.html" class="btn btn-outline">Login</a>
+        <a href="register.html" class="btn btn-primary">Register</a>
+      `;
+    }
+    if (adminLink) {
+      adminLink.style.display = 'none';
+    }
+  }
+}
 
 // Handle login
 async function handleLogin(e) {
@@ -36,7 +72,12 @@ async function handleLogin(e) {
       localStorage.setItem('user', JSON.stringify(data.user));
       showAlert('Login successful! Redirecting...', 'success');
       setTimeout(() => {
-        window.location.href = 'index.html';
+        // Redirect admin to admin page, regular users to home
+        if (data.user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'index.html';
+        }
       }, 1000);
     } else {
       showAlert(data.message || 'Login failed.', 'danger');
@@ -82,6 +123,13 @@ async function handleRegister(e) {
   } catch (error) {
     showAlert('Network error. Please try again.', 'danger');
   }
+}
+
+// Handle logout
+function handleLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
 }
 
 // Utility functions
