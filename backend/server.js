@@ -12,16 +12,22 @@ const frontendPath = path.join(__dirname, "../frontend");
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(frontendPath));
 
-// Routes
+// Serve static files FIRST (CSS, JS, images)
+app.use(express.static(frontendPath, { extensions: ["html"] }));
+
+// API Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/bills", require("./routes/bills"));
 app.use("/api/calculator", require("./routes/calculator"));
 app.use("/api/feedback", require("./routes/feedback"));
 
-// Serve frontend for all non-API routes
-app.get("*", (req, res) => {
+// Catch-all: serve index.html for any unmatched route (but NOT for static assets)
+app.get("*", (req, res, next) => {
+  const ext = path.extname(req.path);
+  if (ext && ext !== ".html") {
+    return next(); // let express handle 404 for missing assets
+  }
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
