@@ -1,24 +1,15 @@
-// Authentication JavaScript
 const API_URL = `${location.origin}/api`;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Update navbar on every page load
   updateNavbar();
 
-  // Login form
   const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', handleLogin);
-  }
+  if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
-  // Register form
   const registerForm = document.getElementById('registerForm');
-  if (registerForm) {
-    registerForm.addEventListener('submit', handleRegister);
-  }
+  if (registerForm) registerForm.addEventListener('submit', handleRegister);
 });
 
-// Update navbar based on login state
 function updateNavbar() {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -26,37 +17,32 @@ function updateNavbar() {
   const adminLink = document.getElementById('adminLink');
 
   if (token && user) {
-    // User is logged in — replace Login/Register with name + logout
     if (navAuth) {
       navAuth.innerHTML = `
-        <span style="color: white; margin-right: 1rem; font-weight: 500;">👤 ${user.fullname}</span>
-        <button onclick="handleLogout()" class="btn btn-outline" style="cursor:pointer;">Logout</button>
+        <span style="color:rgba(255,255,255,0.88); font-size:0.88rem; font-weight:500;">👤 ${user.fullname.split(' ')[0]}</span>
+        <button onclick="handleLogout()" class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 1rem;">Logout</button>
       `;
     }
-    // Show Admin link if user is admin
     if (adminLink && user.role === 'admin') {
       adminLink.style.display = 'inline-block';
     }
   } else {
-    // Not logged in — show Login/Register
     if (navAuth) {
       navAuth.innerHTML = `
         <a href="login.html" class="btn btn-outline">Login</a>
         <a href="register.html" class="btn btn-primary">Register</a>
       `;
     }
-    if (adminLink) {
-      adminLink.style.display = 'none';
-    }
+    if (adminLink) adminLink.style.display = 'none';
   }
 }
 
-// Handle login
 async function handleLogin(e) {
   e.preventDefault();
-
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
+  const btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('.btn-calculate');
+  if (btn) { btn.disabled = true; btn.textContent = 'Logging in...'; }
 
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -72,34 +58,30 @@ async function handleLogin(e) {
       localStorage.setItem('user', JSON.stringify(data.user));
       showAlert('Login successful! Redirecting...', 'success');
       setTimeout(() => {
-        // Redirect admin to admin page, regular users to home
         if (data.user.role === 'admin') {
           window.location.href = 'admin.html';
         } else {
-          window.location.href = 'index.html';
+          window.location.href = 'taxpayer-dashboard.html';
         }
-      }, 1000);
+      }, 900);
     } else {
       showAlert(data.message || 'Login failed.', 'danger');
+      if (btn) { btn.disabled = false; btn.textContent = 'Login'; }
     }
   } catch (error) {
     showAlert('Network error. Please try again.', 'danger');
+    if (btn) { btn.disabled = false; btn.textContent = 'Login'; }
   }
 }
 
-// Handle register
 async function handleRegister(e) {
   e.preventDefault();
-
   const fullname = document.getElementById('fullname').value;
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
 
-  if (password !== confirmPassword) {
-    showAlert('Passwords do not match.', 'danger');
-    return;
-  }
+  if (password !== confirmPassword) { showAlert('Passwords do not match.', 'danger'); return; }
 
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
@@ -114,9 +96,7 @@ async function handleRegister(e) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       showAlert('Registration successful! Redirecting...', 'success');
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 1000);
+      setTimeout(() => { window.location.href = 'taxpayer-dashboard.html'; }, 900);
     } else {
       showAlert(data.message || 'Registration failed.', 'danger');
     }
@@ -125,33 +105,21 @@ async function handleRegister(e) {
   }
 }
 
-// Handle logout
 function handleLogout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   window.location.href = 'index.html';
 }
 
-// Utility functions
 function showAlert(message, type, containerId = 'alertContainer') {
   const container = document.getElementById(containerId);
   if (!container) return;
-
-  container.innerHTML = `
-    <div class="alert alert-${type}" style="margin-bottom: 1rem; padding: 1rem; border-radius: 8px; border-left: 4px solid var(--${type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'danger'}-color); background-color: ${type === 'success' ? '#d4edda' : type === 'warning' ? '#fff3cd' : '#f8d7da'}; color: ${type === 'success' ? '#155724' : type === 'warning' ? '#856404' : '#721c24'};">
-      ${message}
-    </div>
-  `;
-
-  // Auto-hide after 5 seconds
-  setTimeout(() => {
-    container.innerHTML = '';
-  }, 5000);
+  const icons = { success: '✅', danger: '❌', warning: '⚠️' };
+  container.innerHTML = `<div class="alert alert-${type}">${icons[type] || ''} ${message}</div>`;
+  setTimeout(() => { if (container) container.innerHTML = ''; }, 5000);
 }
 
-function isAuthenticated() {
-  return !!localStorage.getItem('token');
-}
+function isAuthenticated() { return !!localStorage.getItem('token'); }
 
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
@@ -160,7 +128,5 @@ function getAuthHeaders() {
 
 function toggleMobileMenu() {
   const navLinks = document.getElementById('navLinks');
-  if (navLinks) {
-    navLinks.classList.toggle('active');
-  }
+  if (navLinks) navLinks.classList.toggle('active');
 }
