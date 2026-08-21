@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard - NRS Tax Tracking System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand"><span>🇳🇬</span><span>NRS Tax Tracking System</span></a>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+      <div class="nav-links" id="navLinks">
+        <a href="taxpayer-dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="bill-sections.html" class="nav-link">Bill Sections</a>
+        <a href="calculator.html" class="nav-link">Tax Calculator</a>
+        <a href="payment.html" class="nav-link">Pay Tax</a>
+        <a href="track-payment.html" class="nav-link">Track Payment</a>
+        <a href="feedback.html" class="nav-link">Feedback</a>
+        <a href="admin.html" class="nav-link" id="adminLink" style="display:none;">Admin</a>
+      </div>
+      <div class="nav-auth" id="navAuth"></div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div id="alertContainer"></div>
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div>
+        <h2 id="welcomeText">Welcome back!</h2>
+        <p id="tinText">Complete your taxpayer profile to get started with tax payments.</p>
+      </div>
+      <a href="taxpayer-profile.html" id="profileBtn">View Profile →</a>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-title" style="text-align:left; margin-bottom:1.2rem;">
+      <h2>Quick Actions</h2>
+      <p>Everything you need in one place</p>
+    </div>
+
+    <div class="taxpayer-dashboard">
+      <a href="taxpayer-profile.html" class="dashboard-card">
+        <div class="icon">👤</div>
+        <h3>My Profile</h3>
+        <p>View and update your taxpayer profile and TIN</p>
+      </a>
+      <a href="payment.html" class="dashboard-card">
+        <div class="icon">💳</div>
+        <h3>Pay Tax</h3>
+        <p>Make a secure tax payment online</p>
+      </a>
+      <a href="track-payment.html" class="dashboard-card">
+        <div class="icon">🔍</div>
+        <h3>Track Payment</h3>
+        <p>Search payment history by receipt number</p>
+      </a>
+      <a href="calculator.html" class="dashboard-card">
+        <div class="icon">🧮</div>
+        <h3>Tax Calculator</h3>
+        <p>Calculate your PIT, CIT or VAT liability</p>
+      </a>
+      <a href="bill-sections.html" class="dashboard-card">
+        <div class="icon">📜</div>
+        <h3>Bill Sections</h3>
+        <p>Read NRS tax laws and regulations</p>
+      </a>
+      <a href="feedback.html" class="dashboard-card">
+        <div class="icon">💬</div>
+        <h3>Give Feedback</h3>
+        <p>Share your thoughts on the tax system</p>
+      </a>
+    </div>
+
+    <!-- Recent Payments -->
+    <div style="margin-top:2.5rem;">
+      <div class="section-title" style="text-align:left; margin-bottom:1.2rem;">
+        <h2>Recent Payments</h2>
+        <p>Your latest tax payment transactions</p>
+      </div>
+      <div id="recentPayments" style="background:white; border-radius:12px; padding:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.08); border:1px solid #E5E7EB;">
+        <div class="loading"><div class="spinner"></div><p>Loading payments...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>NIGERIA REVENUE SERVICE (NRS) - Tax Tracking System</strong></p>
+    <p>© 2026 - Built for Educational Purposes</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+      if (!token || !user) { window.location.href = 'login.html'; return; }
+      if (user.role === 'admin') { window.location.href = 'admin.html'; return; }
+
+      document.getElementById('welcomeText').textContent = `Welcome back, ${user.fullname.split(' ')[0]}! 👋`;
+
+      // Load taxpayer profile
+      try {
+        const res = await fetch('/api/taxpayers/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const profile = await res.json();
+          document.getElementById('tinText').innerHTML = `Your TIN: <strong>${profile.tin}</strong> &nbsp;|&nbsp; Category: <strong>${profile.tax_category}</strong>`;
+          document.getElementById('profileBtn').textContent = 'My Profile →';
+        } else {
+          document.getElementById('tinText').textContent = '⚠️ Complete your taxpayer profile to start making payments.';
+          document.getElementById('profileBtn').textContent = 'Complete Profile →';
+          document.getElementById('profileBtn').href = 'taxpayer-profile.html';
+        }
+      } catch (e) {}
+
+      // Load recent payments
+      try {
+        const res = await fetch('/api/payments/my-payments', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const payments = await res.json();
+        const container = document.getElementById('recentPayments');
+
+        if (!payments.length) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:2rem; color:#6B7280;">
+              <p style="font-size:2rem; margin-bottom:0.8rem;">💳</p>
+              <p style="font-weight:600; margin-bottom:0.4rem;">No payments yet</p>
+              <p style="font-size:0.88rem; margin-bottom:1.2rem;">Make your first tax payment to see your history here.</p>
+              <a href="payment.html" style="background:#006B3F; color:white; padding:0.6rem 1.4rem; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.9rem;">Make a Payment</a>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+            <thead>
+              <tr style="background:#F9FAFB;">
+                <th style="padding:0.7rem 1rem; text-align:left; color:#374151; font-weight:600; border-bottom:1px solid #E5E7EB;">Receipt No.</th>
+                <th style="padding:0.7rem 1rem; text-align:left; color:#374151; font-weight:600; border-bottom:1px solid #E5E7EB;">Tax Category</th>
+                <th style="padding:0.7rem 1rem; text-align:left; color:#374151; font-weight:600; border-bottom:1px solid #E5E7EB;">Amount</th>
+                <th style="padding:0.7rem 1rem; text-align:left; color:#374151; font-weight:600; border-bottom:1px solid #E5E7EB;">Status</th>
+                <th style="padding:0.7rem 1rem; text-align:left; color:#374151; font-weight:600; border-bottom:1px solid #E5E7EB;">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${payments.slice(0, 5).map(p => `
+                <tr>
+                  <td style="padding:0.7rem 1rem; border-bottom:1px solid #F3F4F6; font-size:0.78rem; color:#374151;">${p.receipt_number}</td>
+                  <td style="padding:0.7rem 1rem; border-bottom:1px solid #F3F4F6;">${p.tax_name}</td>
+                  <td style="padding:0.7rem 1rem; border-bottom:1px solid #F3F4F6; font-weight:600;">₦${parseFloat(p.amount).toLocaleString('en-NG', {minimumFractionDigits:2})}</td>
+                  <td style="padding:0.7rem 1rem; border-bottom:1px solid #F3F4F6;">
+                    <span style="background:${p.payment_status==='Successful'?'#DCFCE7':'#FEE2E2'}; color:${p.payment_status==='Successful'?'#166534':'#991B1B'}; padding:0.2rem 0.7rem; border-radius:20px; font-size:0.75rem; font-weight:600;">${p.payment_status}</span>
+                  </td>
+                  <td style="padding:0.7rem 1rem; border-bottom:1px solid #F3F4F6; color:#6B7280;">${new Date(p.payment_date).toLocaleDateString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ${payments.length > 5 ? `<div style="text-align:center; margin-top:1rem;"><a href="track-payment.html" style="color:#006B3F; font-weight:600; font-size:0.88rem;">View all ${payments.length} payments →</a></div>` : ''}
+        `;
+      } catch (e) {
+        document.getElementById('recentPayments').innerHTML = '<p style="color:#6B7280; text-align:center; padding:1.5rem;">Could not load payment history.</p>';
+      }
+    });
+  </script>
+</body>
+</html>

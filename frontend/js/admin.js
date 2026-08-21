@@ -1,274 +1,132 @@
-// Admin Dashboard JavaScript
+const API_URL = `${location.origin}/api`;
 
 document.addEventListener('DOMContentLoaded', () => {
-  checkAdminAccess();
+  updateNavbar();
+
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.addEventListener('submit', handleLogin);
+
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) registerForm.addEventListener('submit', handleRegister);
 });
 
-// Check admin access
-function checkAdminAccess() {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+function updateNavbar() {
   const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const navAuth = document.getElementById('navAuth');
+  const adminLink = document.getElementById('adminLink');
 
-  if (!token || user.role !== 'admin') {
-    document.getElementById('accessDenied').style.display = 'block';
-    document.getElementById('adminPanel').style.display = 'none';
-    return;
+  if (token && user) {
+    if (navAuth) {
+      navAuth.innerHTML = `
+        <span style="color:rgba(255,255,255,0.88); font-size:0.88rem; font-weight:500;">👤 ${user.fullname.split(' ')[0]}</span>
+        <button onclick="handleLogout()" class="btn btn-outline" style="font-size:0.82rem; padding:0.4rem 1rem;">Logout</button>
+      `;
+    }
+    if (adminLink && user.role === 'admin') {
+      adminLink.style.display = 'inline-block';
+    }
+  } else {
+    if (navAuth) {
+      navAuth.innerHTML = `
+        <a href="login.html" class="btn btn-outline">Login</a>
+        <a href="register.html" class="btn btn-primary">Register</a>
+      `;
+    }
+    if (adminLink) adminLink.style.display = 'none';
   }
-
-  document.getElementById('accessDenied').style.display = 'none';
-  document.getElementById('adminPanel').style.display = 'block';
-  loadAdminData();
 }
 
-// Load all admin data
-async function loadAdminData() {
-  await Promise.all([
-    loadBillSections(),
-    loadFeedback(),
-    loadStatistics()
-  ]);
-}
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const btn = e.target.querySelector('button[type="submit"]') || e.target.querySelector('.btn-calculate');
+  if (btn) { btn.disabled = true; btn.textContent = 'Logging in...'; }
 
-// Load bill sections for admin
-async function loadBillSections() {
   try {
-    const response = await fetch(`${API_URL}/bills`, {
-      headers: getAuthHeaders()
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
     });
-    const bills = await response.json();
-    renderBillsTable(bills);
-  } catch (error) {
-    document.getElementById('billsTableContainer').innerHTML = `
-      <div class="alert alert-danger">Failed to load bill sections.</div>
-    `;
-  }
-}
 
-// Render bills table
-function renderBillsTable(bills) {
-  const container = document.getElementById('billsTableContainer');
+    const data = await response.json();
 
-  if (bills.length === 0) {
-    container.innerHTML = '<p>No bill sections found.</p>';
-    return;
-  }
-
-  container.innerHTML = `
-    <div style="overflow-x: auto;">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Section</th>
-            <th>Title</th>
-            <th>Category</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${bills.map(bill => `
-            <tr>
-              <td>${bill.section_number}</td>
-              <td>${bill.title}</td>
-              <td><span class="bill-category">${bill.category}</span></td>
-              <td>
-                <button class="btn-small btn-edit" onclick="editBill(${bill.id})">Edit</button>
-                <button class="btn-small btn-danger" onclick="deleteBill(${bill.id})">Delete</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-// Load feedback for admin
-async function loadFeedback() {
-  try {
-    const response = await fetch(`${API_URL}/feedback`, {
-      headers: getAuthHeaders()
-    });
-    const feedbacks = await response.json();
-    renderFeedbackTable(feedbacks);
-  } catch (error) {
-    document.getElementById('feedbackTableContainer').innerHTML = `
-      <div class="alert alert-danger">Failed to load feedback.</div>
-    `;
-  }
-}
-
-// Render feedback table
-function renderFeedbackTable(feedbacks) {
-  const container = document.getElementById('feedbackTableContainer');
-
-  if (feedbacks.length === 0) {
-    container.innerHTML = '<p>No feedback found.</p>';
-    return;
-  }
-
-  container.innerHTML = `
-    <div style="overflow-x: auto;">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Name</th>
-            <th>Subject</th>
-            <th>Message</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${feedbacks.map(fb => `
-            <tr>
-              <td>${new Date(fb.created_at).toLocaleDateString()}</td>
-              <td>${fb.fullname || fb.user_name || 'Anonymous'}</td>
-              <td>${fb.subject}</td>
-              <td>${fb.message.substring(0, 100)}${fb.message.length > 100 ? '...' : ''}</td>
-              <td>
-                <button class="btn-small btn-danger" onclick="deleteFeedback(${fb.id})">Delete</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-// Load statistics
-async function loadStatistics() {
-  try {
-    const [billsRes, feedbackRes] = await Promise.all([
-      fetch(`${API_URL}/bills`, { headers: getAuthHeaders() }),
-      fetch(`${API_URL}/feedback`, { headers: getAuthHeaders() })
-    ]);
-
-    const bills = await billsRes.json();
-    const feedbacks = await feedbackRes.json();
-
-    document.getElementById('statBills').textContent = bills.length;
-    document.getElementById('statFeedback').textContent = feedbacks.length;
-    document.getElementById('statUsers').textContent = '—';
-    document.getElementById('statCalculations').textContent = '—';
-  } catch (error) {
-    console.error('Failed to load statistics:', error);
-  }
-}
-
-// Open bill modal
-function openBillModal() {
-  document.getElementById('billModal').style.display = 'flex';
-  document.getElementById('modalTitle').textContent = 'Add Bill Section';
-  document.getElementById('billForm').reset();
-  document.getElementById('billId').value = '';
-}
-
-// Close bill modal
-function closeBillModal() {
-  document.getElementById('billModal').style.display = 'none';
-}
-
-// Edit bill
-async function editBill(id) {
-  try {
-    const response = await fetch(`${API_URL}/bills/${id}`, {
-      headers: getAuthHeaders()
-    });
-    const bill = await response.json();
-
-    document.getElementById('billId').value = bill.id;
-    document.getElementById('billSectionNumber').value = bill.section_number;
-    document.getElementById('billTitle').value = bill.title;
-    document.getElementById('billCategory').value = bill.category;
-    document.getElementById('billContent').value = bill.content;
-
-    document.getElementById('modalTitle').textContent = 'Edit Bill Section';
-    document.getElementById('billModal').style.display = 'flex';
-  } catch (error) {
-    showAlert('Failed to load bill section.', 'danger', 'modalAlert');
-  }
-}
-
-// Save bill (create or update)
-document.addEventListener('DOMContentLoaded', () => {
-  const billForm = document.getElementById('billForm');
-  if (billForm) {
-    billForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const id = document.getElementById('billId').value;
-      const data = {
-        section_number: document.getElementById('billSectionNumber').value,
-        title: document.getElementById('billTitle').value,
-        category: document.getElementById('billCategory').value,
-        content: document.getElementById('billContent').value
-      };
-
-      try {
-        const url = id ? `${API_URL}/bills/${id}` : `${API_URL}/bills`;
-        const method = id ? 'PUT' : 'POST';
-
-        const response = await fetch(url, {
-          method,
-          headers: getAuthHeaders(),
-          body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-          showAlert(id ? 'Bill section updated!' : 'Bill section created!', 'success', 'modalAlert');
-          closeBillModal();
-          loadBillSections();
-          loadStatistics();
+    if (response.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      showAlert('Login successful! Redirecting...', 'success');
+      setTimeout(() => {
+        if (data.user.role === 'admin') {
+          window.location.href = 'admin.html';
         } else {
-          const result = await response.json();
-          showAlert(result.message || 'Operation failed.', 'danger', 'modalAlert');
+          window.location.href = 'taxpayer-dashboard.html';
         }
-      } catch (error) {
-        showAlert('Network error.', 'danger', 'modalAlert');
-      }
-    });
-  }
-});
-
-// Delete bill
-async function deleteBill(id) {
-  if (!confirm('Are you sure you want to delete this bill section?')) return;
-
-  try {
-    const response = await fetch(`${API_URL}/bills/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-
-    if (response.ok) {
-      loadBillSections();
-      loadStatistics();
+      }, 900);
     } else {
-      showAlert('Failed to delete bill section.', 'danger');
+      showAlert(data.message || 'Login failed.', 'danger');
+      if (btn) { btn.disabled = false; btn.textContent = 'Login'; }
     }
   } catch (error) {
-    showAlert('Network error.', 'danger');
+    showAlert('Network error. Please try again.', 'danger');
+    if (btn) { btn.disabled = false; btn.textContent = 'Login'; }
   }
 }
 
-// Delete feedback
-async function deleteFeedback(id) {
-  if (!confirm('Are you sure you want to delete this feedback?')) return;
+async function handleRegister(e) {
+  e.preventDefault();
+  const fullname = document.getElementById('fullname').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+
+  if (password !== confirmPassword) { showAlert('Passwords do not match.', 'danger'); return; }
 
   try {
-    const response = await fetch(`${API_URL}/feedback/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullname, email, password })
     });
 
+    const data = await response.json();
+
     if (response.ok) {
-      loadFeedback();
-      loadStatistics();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      showAlert('Registration successful! Redirecting...', 'success');
+      setTimeout(() => { window.location.href = 'taxpayer-dashboard.html'; }, 900);
     } else {
-      showAlert('Failed to delete feedback.', 'danger');
+      showAlert(data.message || 'Registration failed.', 'danger');
     }
   } catch (error) {
-    showAlert('Network error.', 'danger');
+    showAlert('Network error. Please try again.', 'danger');
   }
+}
+
+function handleLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
+}
+
+function showAlert(message, type, containerId = 'alertContainer') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const icons = { success: '✅', danger: '❌', warning: '⚠️' };
+  container.innerHTML = `<div class="alert alert-${type}">${icons[type] || ''} ${message}</div>`;
+  setTimeout(() => { if (container) container.innerHTML = ''; }, 5000);
+}
+
+function isAuthenticated() { return !!localStorage.getItem('token'); }
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+function toggleMobileMenu() {
+  const navLinks = document.getElementById('navLinks');
+  if (navLinks) navLinks.classList.toggle('active');
 }
